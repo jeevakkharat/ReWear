@@ -1,0 +1,15 @@
+# Node
+node_modules/
+
+# Environment variables
+.env
+.env.*
+
+# Build output
+client/dist/
+server/logs/
+
+# OS/editor
+.DS_Store
+.vscode/
+.idea/
