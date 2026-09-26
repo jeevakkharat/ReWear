@@ -101,6 +101,18 @@ const products = [
     image:
       "https://images.unsplash.com/photo-1599624427857-461fd60c23e5?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
   },
+  {
+    id : 7,
+    name: "Winter Sweatshirt",
+    category: "Men",
+    price: 1499,
+    originalPrice: 2000,
+    rating: 4.9,
+    reviews: 88,
+    tag: "Trending",
+    image:
+    "https://images.unsplash.com/photo-1614975059251-992f11792b9f?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+  },
 ];
 
 const featuredCollections = [

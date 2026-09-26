@@ -50,8 +50,21 @@ export default function Login() {
         JSON.stringify({
           name: result.user.fullName,
           email: result.user.email,
+          role: result.user.role || "user",
+          token: result.token || "",
         })
       );
+
+      if (result.user.role === "admin") {
+        navigate("/admin", {
+          replace: true,
+          state: {
+            loginSuccess: true,
+            name: result.user.fullName.split(" ")[0],
+          },
+        });
+        return;
+      }
 
       const redirectPath = location.state?.from?.pathname || "/";
 

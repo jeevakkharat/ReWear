@@ -80,6 +80,8 @@ export default function Register({ onBackToLogin }) {
         JSON.stringify({
           name: fullName,
           email,
+          role: "user",
+          token: result.token || "",
         })
       );
 
