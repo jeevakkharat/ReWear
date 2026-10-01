@@ -24,7 +24,7 @@ function getCurrentUser() {
 function ProtectedAdminRoute({ children }) {
   const currentUser = getCurrentUser();
 
-  if (!currentUser || currentUser.role !== "admin") {
+  if (!currentUser?.token || currentUser.role !== "admin") {
     return <Navigate to="/login" replace />;
   }
 
@@ -34,7 +34,7 @@ function ProtectedAdminRoute({ children }) {
 function ProtectedUserRoute({ children }) {
   const currentUser = getCurrentUser();
 
-  if (!currentUser || !currentUser.role) {
+  if (!currentUser?.token || !currentUser.role || currentUser.role === "admin") {
     return <Navigate to="/login" replace />;
   }
 
@@ -51,7 +51,14 @@ function App() {
           <Route path="/products/:id" element={<ProductDetailPage />} />
           <Route path="/category/:category" element={<CategoryPage />} />
           <Route path="/cart" element={<CartPage />} />
-          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route
+            path="/checkout"
+            element={(
+              <ProtectedUserRoute>
+                <CheckoutPage />
+              </ProtectedUserRoute>
+            )}
+          />
           <Route
             path="/profile"
             element={

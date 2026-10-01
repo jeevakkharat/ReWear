@@ -78,12 +78,14 @@ export default function Register({ onBackToLogin }) {
       localStorage.setItem(
         "rewear-current-user",
         JSON.stringify({
+          id: result.user.id,
           name: fullName,
           email,
           role: "user",
           token: result.token || "",
         })
       );
+      window.dispatchEvent(new Event("rewear-auth-changed"));
 
       const redirectPath = location.state?.from?.pathname || "/";
 

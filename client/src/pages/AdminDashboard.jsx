@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { FiLayers, FiLogOut, FiPackage, FiRotateCcw, FiShoppingBag, FiUsers } from "react-icons/fi";
+import "./AdminDashboard.css";
 
 const API_URL = "http://localhost:5000/api";
 
@@ -246,60 +248,67 @@ export default function AdminDashboard() {
 
   const handleLogout = () => {
     localStorage.removeItem("rewear-current-user");
+    window.dispatchEvent(new Event("rewear-auth-changed"));
     window.location.href = "/login";
   };
 
   return (
-    <div style={{ padding: "32px", background: "#f8f6f2", minHeight: "100vh" }}>
-      <div style={{ maxWidth: "1280px", margin: "0 auto" }}>
-        <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "28px" }}>
-          <div>
-            <p style={{ margin: 0, color: "#8a6d3b", fontWeight: 700 }}>Admin Panel</p>
-            <h1 style={{ margin: "6px 0 0", fontSize: "2rem" }}>ReWear Dashboard</h1>
+    <div className="admin-dashboard">
+      <div className="admin-dashboard__container">
+        <header className="admin-dashboard__header">
+          <div className="admin-dashboard__title">
+            <p className="admin-dashboard__eyebrow">Admin Panel</p>
+            <h1>ReWear Dashboard</h1>
           </div>
-          <button type="button" onClick={handleLogout} style={{ padding: "10px 16px", borderRadius: "10px", border: "none", background: "#1a1a1a", color: "white", cursor: "pointer" }}>
+          <button type="button" onClick={handleLogout} className="admin-button admin-button--secondary admin-dashboard__logout">
+            <FiLogOut aria-hidden="true" />
             Logout
           </button>
         </header>
 
-        {message && <div style={{ background: "#e7f7ee", color: "#1d5b45", padding: "12px 16px", borderRadius: "10px", marginBottom: "20px" }}>{message}</div>}
-        {error && <div style={{ background: "#fdecec", color: "#9b2c2c", padding: "12px 16px", borderRadius: "10px", marginBottom: "20px" }}>{error}</div>}
+        {message && <div className="admin-notice admin-notice--success" role="status">{message}</div>}
+        {error && <div className="admin-notice admin-notice--error" role="alert">{error}</div>}
 
-        <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "16px", marginBottom: "28px" }}>
-          <StatCard label="Total Products" value={dashboard.stats.totalProducts || 0} />
-          <StatCard label="Inventory Items" value={dashboard.stats.inventoryCount || 0} />
-          <StatCard label="Pending Returns" value={dashboard.stats.pendingReturns || 0} />
-          <StatCard label="Total Orders" value={orders.length} />
-          <StatCard label="Customers" value={users.length} />
+        <section className="admin-stats" aria-label="Dashboard summary">
+          <StatCard icon={FiPackage} label="Total Products" value={dashboard.stats.totalProducts || 0} />
+          <StatCard icon={FiLayers} label="Inventory Items" value={dashboard.stats.inventoryCount || 0} />
+          <StatCard icon={FiRotateCcw} label="Pending Returns" value={dashboard.stats.pendingReturns || 0} />
+          <StatCard icon={FiShoppingBag} label="Total Orders" value={orders.length} />
+          <StatCard icon={FiUsers} label="Customers" value={users.length} />
         </section>
 
-        <section style={{ display: "grid", gridTemplateColumns: "1.15fr 0.85fr", gap: "24px" }}>
-          <div style={{ background: "white", borderRadius: "18px", padding: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-            <h2 style={{ marginTop: 0 }}>{editingProductId ? "Edit Product" : "Add New Product"}</h2>
-            <form onSubmit={handleAddOrUpdateProduct} style={{ display: "grid", gap: "12px" }}>
+        <section className="admin-grid admin-grid--primary">
+          <div className="admin-card">
+            <div className="admin-card__header">
+              <div>
+                <p className="admin-card__eyebrow">Catalog</p>
+                <h2>{editingProductId ? "Edit Product" : "Add New Product"}</h2>
+              </div>
+            </div>
+            <form onSubmit={handleAddOrUpdateProduct} className="admin-form">
               <input name="name" value={productForm.name} onChange={handleProductInputChange} placeholder="Product name" style={inputStyle} />
               <select name="category" value={productForm.category} onChange={handleProductInputChange} style={inputStyle}>
                 <option value="Men">Men</option>
                 <option value="Women">Women</option>
                 <option value="Kids">Kids</option>
               </select>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+              <div className="admin-form__row">
                 <input name="price" type="number" value={productForm.price} onChange={handleProductInputChange} placeholder="Price" style={inputStyle} />
                 <input name="stock" type="number" value={productForm.stock} onChange={handleProductInputChange} placeholder="Stock" style={inputStyle} />
               </div>
               <input name="image" value={productForm.image} onChange={handleProductInputChange} placeholder="Image URL" style={inputStyle} />
-              <textarea name="description" value={productForm.description} onChange={handleProductInputChange} placeholder="Description" rows={4} style={{ ...inputStyle, resize: "vertical" }} />
+              <textarea name="description" value={productForm.description} onChange={handleProductInputChange} placeholder="Description" rows={4} className="admin-input admin-input--textarea" />
               <select name="status" value={productForm.status} onChange={handleProductInputChange} style={inputStyle}>
                 <option value="active">Active</option>
                 <option value="featured">Featured</option>
                 <option value="archived">Archived</option>
               </select>
-              <div style={{ display: "flex", gap: "12px" }}>
-                <button type="submit" style={{ flex: 1, padding: "12px 16px", border: "none", borderRadius: "10px", background: "#1f1f1f", color: "white", cursor: "pointer", fontWeight: 700 }}>
+              <div className="admin-form__actions">
+                <button type="submit" className="admin-button admin-button--primary">
                   {editingProductId ? "Update Product" : "Add Product"}
                 </button>
                 {editingProductId && (
-                  <button type="button" onClick={() => { setEditingProductId(null); setProductForm(emptyProductForm); }} style={{ padding: "12px 16px", border: "1px solid #ccc", borderRadius: "10px", background: "white", cursor: "pointer" }}>
+                  <button type="button" onClick={() => { setEditingProductId(null); setProductForm(emptyProductForm); }} className="admin-button admin-button--secondary">
                     Cancel
                   </button>
                 )}
@@ -307,23 +316,26 @@ export default function AdminDashboard() {
             </form>
           </div>
 
-          <div style={{ background: "white", borderRadius: "18px", padding: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-            <h2 style={{ marginTop: 0 }}>Inventory</h2>
-            <div style={{ display: "grid", gap: "12px" }}>
+          <div className="admin-card">
+            <div className="admin-card__header">
+              <div>
+                <p className="admin-card__eyebrow">Stock overview</p>
+                <h2>Inventory</h2>
+              </div>
+            </div>
+            <div className="admin-list">
               {inventory.length === 0 ? (
-                <p>No inventory items found.</p>
+                <p className="admin-empty">No inventory items found.</p>
               ) : (
                 inventory.map((product) => (
-                  <div key={product._id || product.id} style={{ border: "1px solid #eee", borderRadius: "10px", padding: "12px" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", alignItems: "center" }}>
-                      <div>
-                        <strong>{product.name}</strong>
-                        <div style={{ color: "#666", marginTop: "4px" }}>{product.category} • ₹{product.price} • Stock: {product.stock}</div>
-                      </div>
-                      <div style={{ display: "flex", gap: "8px" }}>
-                        <button type="button" onClick={() => handleEditProduct(product)} style={{ padding: "6px 10px", border: "none", borderRadius: "8px", background: "#f1e2c9", color: "#4d3c1a", cursor: "pointer" }}>Edit</button>
-                        <button type="button" onClick={() => handleDeleteProduct(product._id || product.id)} style={{ padding: "6px 10px", border: "none", borderRadius: "8px", background: "#e8d4d4", color: "#7a2c2c", cursor: "pointer" }}>Delete</button>
-                      </div>
+                  <div key={product._id || product.id} className="admin-list-item">
+                    <div className="admin-list-item__content">
+                      <strong className="admin-list-item__title">{product.name}</strong>
+                      <div className="admin-list-item__meta">{product.category} <span>•</span> ₹{product.price} <span>•</span> Stock: {product.stock}</div>
+                    </div>
+                    <div className="admin-list-item__actions">
+                      <button type="button" onClick={() => handleEditProduct(product)} className="admin-button admin-button--small admin-button--secondary">Edit</button>
+                      <button type="button" onClick={() => handleDeleteProduct(product._id || product.id)} className="admin-button admin-button--small admin-button--danger">Delete</button>
                     </div>
                   </div>
                 ))
@@ -332,42 +344,52 @@ export default function AdminDashboard() {
           </div>
         </section>
 
-        <section style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px", marginTop: "24px" }}>
-          <div style={{ background: "white", borderRadius: "18px", padding: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-            <h2 style={{ marginTop: 0 }}>Category Management</h2>
-            <form onSubmit={handleAddCategory} style={{ display: "grid", gap: "12px", marginBottom: "18px" }}>
+        <section className="admin-grid admin-grid--secondary">
+          <div className="admin-card">
+            <div className="admin-card__header">
+              <div>
+                <p className="admin-card__eyebrow">Catalog setup</p>
+                <h2>Category Management</h2>
+              </div>
+            </div>
+            <form onSubmit={handleAddCategory} className="admin-form admin-form--spaced">
               <input name="name" value={categoryForm.name} onChange={handleCategoryInputChange} placeholder="Category name" style={inputStyle} />
               <input name="image" value={categoryForm.image} onChange={handleCategoryInputChange} placeholder="Image URL" style={inputStyle} />
-              <textarea name="description" value={categoryForm.description} onChange={handleCategoryInputChange} placeholder="Description" rows={3} style={{ ...inputStyle, resize: "vertical" }} />
-              <button type="submit" style={{ padding: "12px 16px", border: "none", borderRadius: "10px", background: "#2f2f2f", color: "white", cursor: "pointer", fontWeight: 700 }}>
+              <textarea name="description" value={categoryForm.description} onChange={handleCategoryInputChange} placeholder="Description" rows={3} className="admin-input admin-input--textarea" />
+              <button type="submit" className="admin-button admin-button--primary">
                 Add Category
               </button>
             </form>
-            <div style={{ display: "grid", gap: "10px" }}>
-              {categories.length === 0 ? <p>No categories yet.</p> : categories.map((category) => (
-                <div key={category._id || category.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", border: "1px solid #eee", borderRadius: "10px", padding: "10px 12px" }}>
-                  <div>
-                    <strong>{category.name}</strong>
-                    <div style={{ color: "#666", fontSize: "0.9rem" }}>{category.description || "Custom category"}</div>
+            <div className="admin-list">
+              {categories.length === 0 ? <p className="admin-empty">No categories yet.</p> : categories.map((category) => (
+                <div key={category._id || category.id} className="admin-list-item">
+                  <div className="admin-list-item__content">
+                    <strong className="admin-list-item__title">{category.name}</strong>
+                    <div className="admin-list-item__meta">{category.description || "Custom category"}</div>
                   </div>
-                  <button type="button" onClick={() => handleDeleteCategory(category._id || category.id)} style={{ padding: "6px 10px", border: "none", borderRadius: "8px", background: "#e8d4d4", color: "#7a2c2c", cursor: "pointer" }}>Delete</button>
+                  <button type="button" onClick={() => handleDeleteCategory(category._id || category.id)} className="admin-button admin-button--small admin-button--danger">Delete</button>
                 </div>
               ))}
             </div>
           </div>
 
-          <div style={{ background: "white", borderRadius: "18px", padding: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-            <h2 style={{ marginTop: 0 }}>Customer Accounts</h2>
-            <div style={{ display: "grid", gap: "10px" }}>
-              {users.length === 0 ? <p>No customer accounts found.</p> : users.map((user) => (
-                <div key={user._id || user.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", border: "1px solid #eee", borderRadius: "10px", padding: "10px 12px" }}>
-                  <div>
-                    <strong>{user.fullName}</strong>
-                    <div style={{ color: "#666", fontSize: "0.9rem" }}>{user.email}</div>
-                    <div style={{ color: "#666", fontSize: "0.8rem" }}>Role: {user.role}</div>
+          <div className="admin-card">
+            <div className="admin-card__header">
+              <div>
+                <p className="admin-card__eyebrow">People</p>
+                <h2>Customer Accounts</h2>
+              </div>
+            </div>
+            <div className="admin-list">
+              {users.length === 0 ? <p className="admin-empty">No customer accounts found.</p> : users.map((user) => (
+                <div key={user._id || user.id} className="admin-list-item">
+                  <div className="admin-list-item__content">
+                    <strong className="admin-list-item__title">{user.fullName}</strong>
+                    <div className="admin-list-item__meta">{user.email}</div>
+                    <div className="admin-list-item__role">Role: {user.role}</div>
                   </div>
                   {user.role !== "admin" && (
-                    <button type="button" onClick={() => handleDeleteUser(user._id || user.id)} style={{ padding: "6px 10px", border: "none", borderRadius: "8px", background: "#e8d4d4", color: "#7a2c2c", cursor: "pointer" }}>Remove</button>
+                    <button type="button" onClick={() => handleDeleteUser(user._id || user.id)} className="admin-button admin-button--small admin-button--danger">Remove</button>
                   )}
                 </div>
               ))}
@@ -375,18 +397,23 @@ export default function AdminDashboard() {
           </div>
         </section>
 
-        <section style={{ background: "white", borderRadius: "18px", padding: "20px", marginTop: "24px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-          <h2 style={{ marginTop: 0 }}>Order Management</h2>
-          <div style={{ display: "grid", gap: "12px" }}>
+        <section className="admin-card admin-card--spaced">
+          <div className="admin-card__header">
+            <div>
+              <p className="admin-card__eyebrow">Fulfillment</p>
+              <h2>Order Management</h2>
+            </div>
+          </div>
+          <div className="admin-list">
             {orders.length === 0 ? (
-              <p>No orders found.</p>
+              <p className="admin-empty">No orders found.</p>
             ) : (
               orders.map((order) => (
-                <div key={order._id || order.id} style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr auto", gap: "10px", alignItems: "center", border: "1px solid #eee", borderRadius: "10px", padding: "12px" }}>
-                  <div>
-                    <strong>{order.customer?.fullName || "Customer"}</strong>
-                    <div style={{ color: "#666", fontSize: "0.9rem" }}>{order.customer?.email || "No email"}</div>
-                    <div style={{ color: "#666", fontSize: "0.9rem" }}>Items: {order.items?.length || 0} • Total: ₹{order.total || 0}</div>
+                <div key={order._id || order.id} className="admin-order">
+                  <div className="admin-order__customer">
+                    <strong className="admin-list-item__title">{order.customer?.fullName || "Customer"}</strong>
+                    <div className="admin-list-item__meta">{order.customer?.email || "No email"}</div>
+                    <div className="admin-list-item__meta">Items: {order.items?.length || 0} <span>•</span> Total: ₹{order.total || 0}</div>
                   </div>
                   <select value={order.status || "Pending"} onChange={(event) => handleOrderStatusChange(order._id || order.id, event.target.value)} style={inputStyle}>
                     <option value="Pending">Pending</option>
@@ -395,29 +422,34 @@ export default function AdminDashboard() {
                     <option value="Delivered">Delivered</option>
                     <option value="Cancelled">Cancelled</option>
                   </select>
-                  <span style={{ fontSize: "0.8rem", color: order.status === "Delivered" ? "green" : "#8a6d3b", fontWeight: 700 }}>{order.status || "Pending"}</span>
+                  <span className={`admin-status ${order.status === "Delivered" ? "admin-status--success" : ""}`}>{order.status || "Pending"}</span>
                 </div>
               ))
             )}
           </div>
         </section>
 
-        <section style={{ background: "white", borderRadius: "18px", padding: "20px", marginTop: "24px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-          <h2 style={{ marginTop: 0 }}>Return Requests</h2>
-          <div style={{ display: "grid", gap: "12px" }}>
+        <section className="admin-card admin-card--spaced">
+          <div className="admin-card__header">
+            <div>
+              <p className="admin-card__eyebrow">Aftercare</p>
+              <h2>Return Requests</h2>
+            </div>
+          </div>
+          <div className="admin-list">
             {returns.length === 0 ? (
-              <p>No return requests.</p>
+              <p className="admin-empty">No return requests.</p>
             ) : (
               returns.map((item) => (
-                <div key={item._id || item.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", border: "1px solid #eee", borderRadius: "10px", padding: "12px" }}>
-                  <div>
-                    <strong>{item.orderId}</strong>
-                    <div style={{ color: "#666" }}>{item.customerEmail}</div>
-                    <div style={{ color: "#666" }}>{item.reason}</div>
-                    <div style={{ color: item.status === "approved" ? "green" : "#a65e00", fontSize: "0.8rem" }}>Status: {item.status}</div>
+                <div key={item._id || item.id} className="admin-list-item">
+                  <div className="admin-list-item__content">
+                    <strong className="admin-list-item__title">{item.orderId}</strong>
+                    <div className="admin-list-item__meta">{item.customerEmail}</div>
+                    <div className="admin-list-item__meta">{item.reason}</div>
+                    <div className={`admin-status ${item.status === "approved" ? "admin-status--success" : ""}`}>Status: {item.status}</div>
                   </div>
                   {item.status !== "approved" && (
-                    <button type="button" onClick={() => handleApproveReturn(item._id || item.id)} style={{ padding: "10px 12px", border: "none", borderRadius: "10px", background: "#2d7d46", color: "white", cursor: "pointer" }}>
+                    <button type="button" onClick={() => handleApproveReturn(item._id || item.id)} className="admin-button admin-button--small admin-button--approve">
                       Approve
                     </button>
                   )}
@@ -431,11 +463,12 @@ export default function AdminDashboard() {
   );
 }
 
-function StatCard({ label, value }) {
+function StatCard({ icon: Icon, label, value }) {
   return (
-    <div style={{ background: "white", borderRadius: "14px", padding: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-      <div style={{ color: "#777" }}>{label}</div>
-      <strong style={{ fontSize: "2rem" }}>{value}</strong>
+    <div className="admin-stat">
+      <div className="admin-stat__icon"><Icon aria-hidden="true" /></div>
+      <div className="admin-stat__label">{label}</div>
+      <strong className="admin-stat__value">{value}</strong>
     </div>
   );
 }
@@ -447,4 +480,5 @@ const inputStyle = {
   border: "1px solid #ddd",
   fontSize: "0.96rem",
   boxSizing: "border-box",
+  background: "white",
 };

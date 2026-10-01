@@ -21,6 +21,8 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState("UPI");
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [orderId, setOrderId] = useState("");
+  const [submitError, setSubmitError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const formatCurrency = (amount) => `₹${Number(amount || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
 
@@ -29,21 +31,28 @@ export default function CheckoutPage() {
     setFormData((current) => ({ ...current, [name]: value }));
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
-    if (items.length === 0) return;
+    if (items.length === 0 || isSubmitting) return;
 
-    const order = placeOrder({
-      ...formData,
-      paymentMethod,
-      note: "",
-    });
+    setSubmitError("");
+    setIsSubmitting(true);
+    try {
+      const order = await placeOrder({
+        ...formData,
+        paymentMethod,
+      });
 
-    setOrderId(order.id);
-    setOrderPlaced(true);
-    setFormData(initialCheckoutForm);
-    setPaymentMethod("UPI");
+      setOrderId(order.id);
+      setOrderPlaced(true);
+      setFormData(initialCheckoutForm);
+      setPaymentMethod("UPI");
+    } catch (error) {
+      setSubmitError(error.message || "Unable to place your order. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (items.length === 0 && !orderPlaced) {
@@ -218,7 +227,10 @@ export default function CheckoutPage() {
                   </div>
                 </div>
 
-                <button type="submit" className="primary-btn full-width">Place order</button>
+                {submitError && <p className="form-error">{submitError}</p>}
+                <button type="submit" className="primary-btn full-width" disabled={isSubmitting}>
+                  {isSubmitting ? "Saving order..." : "Place order"}
+                </button>
               </form>
             </div>
 

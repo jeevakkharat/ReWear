@@ -4,6 +4,8 @@ import rewearIcon from "../assets/rewear-icon.svg";
 import { useCart } from "../context/CartContext";
 import "../components/Home.css";
 
+const API_URL = "http://localhost:5000/api";
+
 const categories = [
   {
     name: "Men",
@@ -25,93 +27,6 @@ const categories = [
     image:
       "https://i.pinimg.com/1200x/8e/e3/5b/8ee35b2a1c6d87f521423a0739ce0643.jpg",
     route: "/",
-  },
-];
-
-const products = [
-  {
-    id: 1,
-    name: "Urban Layer Jacket",
-    category: "Men",
-    price: 1999,
-    originalPrice: 2599,
-    rating: 4.8,
-    reviews: 120,
-    tag: "Best Seller",
-    image:
-      "https://images.unsplash.com/photo-1550967155-97a1ebf16bd2?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-  },
-  {
-    id: 2,
-    name: "Blue Blossom",
-    category: "Women",
-    price: 1740,
-    originalPrice: 2350,
-    rating: 4.9,
-    reviews: 98,
-    tag: "New Drop",
-    image:
-      "https://images.unsplash.com/photo-1763294632421-84383bbb9dda?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-  },
-  {
-    id: 3,
-    name: "Mini Hoodie",
-    category: "Kids",
-    price: 1460,
-    originalPrice: 1899,
-    rating: 4.7,
-    reviews: 64,
-    tag: "Top Rated",
-    image:
-      "https://plus.unsplash.com/premium_photo-1706151506322-f5d534b59263?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NjV8fGtpZCUyMGluJTIwaG9vZGllfGVufDB8fDB8fHww",
-  },
-  {
-    id: 4,
-    name: "Street Tee",
-    category: "Men",
-    price: 1320,
-    originalPrice: 1799,
-    rating: 4.6,
-    reviews: 88,
-    tag: "Limited",
-    image:
-      "https://plus.unsplash.com/premium_photo-1727942416727-9f16462ef11b?q=80&w=1935&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-  },
-  {
-    id: 5,
-    name: "Velvet Bloom Dress",
-    category: "Women",
-    price: 1830,
-    originalPrice: 2599,
-    rating: 4.9,
-    reviews: 142,
-    tag: "Trending",
-    image:
-      "https://images.unsplash.com/photo-1775510139259-9a29f5c67e65?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-  },
-  {
-    id: 6,
-    name: "Sunny Sprout Set",
-    category: "Kids",
-    price: 1399,
-    originalPrice: 1785,
-    rating: 4.8,
-    reviews: 72,
-    tag: "Fresh",
-    image:
-      "https://images.unsplash.com/photo-1599624427857-461fd60c23e5?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-  },
-  {
-    id : 7,
-    name: "Winter Sweatshirt",
-    category: "Men",
-    price: 1499,
-    originalPrice: 2000,
-    rating: 4.9,
-    reviews: 88,
-    tag: "Trending",
-    image:
-    "https://images.unsplash.com/photo-1614975059251-992f11792b9f?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
   },
 ];
 
@@ -169,19 +84,43 @@ const testimonials = [
   },
   {
     name: "James D.",
-    text: "ReWear has a sharp, modern aesthetic and the quality feels premium without being overpriced. Every piece I’ve bought looks polished, fits well, and has become a staple in my wardrobe."
+     text: "ReWear has a sharp, modern aesthetic and the quality feels premium without being overpriced. Every piece I’ve bought looks polished, fits well, and has become a staple in my wardrobe."
   },
 ];
 
 const navItems = ["New Arrivals", "Best Sellers", "Sale", "Brands"];
-
 const formatCurrency = (value) => `₹${Number(value || 0).toLocaleString("en-IN")}`;
 
 export default function Home() {
   const location = useLocation();
   const { addToCart, itemCount } = useCart();
+  const [products, setProducts] = useState([]);
   const [activeCategory, setActiveCategory] = useState("all");
   const [registrationMessage, setRegistrationMessage] = useState("");
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await fetch(`${API_URL}/products`);
+        const result = await response.json();
+        if (!response.ok || !result.success) {
+          throw new Error(result.message || "Unable to load products.");
+        }
+
+        setProducts((result.products || []).map((product) => ({
+          ...product,
+          id: product._id,
+          originalPrice: product.price,
+          rating: product.rating || 0,
+          tag: product.tag || "ReWear",
+        })));
+      } catch (error) {
+        console.error("Failed to load homepage products", error);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   useEffect(() => {
     const storedSuccess = localStorage.getItem("rewear-registration-success");
@@ -211,7 +150,7 @@ export default function Home() {
   return (
     <div className="home-page">
       <div className="promo-bar">
-        <p>Free shipping on orders over Rs. 3000 • New season arrivals now live</p>
+        <p>Free shipping on orders over Rs.3000 • New season arrivals now live</p>
       </div>
 
       {registrationMessage && (
@@ -247,7 +186,7 @@ export default function Home() {
       <main className="home-main">
         <section className="hero-section">
           <div className="hero-copy">
-            <span className="eyebrow">New collection of Sep 2026</span>
+            <span className="eyebrow">New collection of 2026</span>
             <h1>Wear confidence in every moment.</h1>
             <p>
               Discover trending looks for Men, Women, and Kids with premium comfort,
@@ -391,7 +330,7 @@ export default function Home() {
                 <div className="product-content">
                   <div className="product-meta">
                     <span>{product.category}</span>
-                    <span className="rating">★ {product.rating}</span>
+                    <span className="rating">★4.{product.rating}</span>
                   </div>
                   <h3>{product.name}</h3>
 

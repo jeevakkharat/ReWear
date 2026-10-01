@@ -11,18 +11,21 @@ const normalizeUserCart = async (userId) => {
   return cart;
 };
 
+const getCartProducts = async (items = []) => {
+  const cartItems = await Promise.all(
+    items.map(async (item) => {
+      const product = await Product.findById(item.productId);
+      return product ? { ...product.toObject(), quantity: item.quantity } : null;
+    })
+  );
+
+  return cartItems.filter(Boolean);
+};
+
 const getCart = async (req, res, next) => {
   try {
     const cart = await normalizeUserCart(req.user._id);
-
-    const cartItems = await Promise.all(
-      (cart.items || []).map(async (item) => {
-        const product = await Product.findById(item.productId);
-        return product ? { ...product.toObject(), quantity: item.quantity } : null;
-      })
-    );
-
-    const filteredCart = cartItems.filter(Boolean);
+    const filteredCart = await getCartProducts(cart.items || []);
     const subtotal = filteredCart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
     return res.json({
@@ -61,7 +64,8 @@ const addToCart = async (req, res, next) => {
 
     await cart.save();
 
-    return res.status(201).json({ success: true, message: "Product added to cart.", cart: cart.items });
+    const cartItems = await getCartProducts(cart.items);
+    return res.status(201).json({ success: true, message: "Product added to cart.", cart: cartItems });
   } catch (error) {
     next(error);
   }
@@ -88,7 +92,8 @@ const updateCartItem = async (req, res, next) => {
 
     await cart.save();
 
-    return res.json({ success: true, message: "Cart updated.", cart: cart.items });
+    const cartItems = await getCartProducts(cart.items);
+    return res.json({ success: true, message: "Cart updated.", cart: cartItems });
   } catch (error) {
     next(error);
   }
@@ -101,7 +106,8 @@ const removeCartItem = async (req, res, next) => {
     cart.items = (cart.items || []).filter((item) => item.productId.toString() !== id.toString());
     await cart.save();
 
-    return res.json({ success: true, message: "Product removed from cart.", cart: cart.items });
+    const cartItems = await getCartProducts(cart.items);
+    return res.json({ success: true, message: "Product removed from cart.", cart: cartItems });
   } catch (error) {
     next(error);
   }

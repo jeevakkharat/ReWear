@@ -48,12 +48,14 @@ export default function Login() {
       localStorage.setItem(
         "rewear-current-user",
         JSON.stringify({
+          id: result.user.id,
           name: result.user.fullName,
           email: result.user.email,
           role: result.user.role || "user",
           token: result.token || "",
         })
       );
+      window.dispatchEvent(new Event("rewear-auth-changed"));
 
       if (result.user.role === "admin") {
         navigate("/admin", {

@@ -67,6 +67,7 @@ export default function Profile() {
 
   const handleLogout = () => {
     localStorage.removeItem("rewear-current-user");
+    window.dispatchEvent(new Event("rewear-auth-changed"));
     setUser({
       name: "ReWear Admin",
       email: "admin@rewear.com",

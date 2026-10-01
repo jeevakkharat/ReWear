@@ -17,6 +17,18 @@ const getStoredUser = () => {
   }
 };
 
+const getCartStorageKey = (user = getStoredUser()) =>
+  user?.id ? `${CART_STORAGE_KEY}:${user.id}` : CART_STORAGE_KEY;
+
+const readStoredCart = (key) => {
+  try {
+    const stored = window.localStorage.getItem(key);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+};
+
 const mapApiCartToClientItems = (cartItems = []) =>
   cartItems.map((item) => ({
     id: String(item.productId || item._id || item.id),
@@ -30,47 +42,64 @@ const mapApiCartToClientItems = (cartItems = []) =>
 
 export function CartProvider({ children }) {
   const [items, setItems] = useState(() => {
-    try {
-      const stored = typeof window !== "undefined" ? window.localStorage.getItem(CART_STORAGE_KEY) : null;
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
+    return typeof window !== "undefined" ? readStoredCart(getCartStorageKey()) : [];
   });
 
   useEffect(() => {
-    const user = getStoredUser();
-
-    if (!user?.token) {
-      if (typeof window !== "undefined") {
-        window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+    const syncCart = async () => {
+      const user = getStoredUser();
+      if (!user?.token) {
+        setItems(readStoredCart(CART_STORAGE_KEY));
+        return;
       }
-      return;
-    }
 
-    const fetchCart = async () => {
       try {
-        const response = await fetch(`${API_URL}/cart`, {
-          headers: { Authorization: `Bearer ${user.token}` },
-        });
-
-        if (!response.ok) return;
-
-        const result = await response.json();
-        if (result?.success) {
-          setItems(mapApiCartToClientItems(result.cart || []));
+        const headers = { Authorization: `Bearer ${user.token}` };
+        let response = await fetch(`${API_URL}/cart`, { headers });
+        let result = await response.json();
+        if (!response.ok || !result.success) {
+          throw new Error(result.message || "Unable to load cart.");
         }
+
+        const guestItems = readStoredCart(CART_STORAGE_KEY);
+        if (guestItems.length > 0) {
+          for (const item of guestItems) {
+            response = await fetch(`${API_URL}/cart/add`, {
+              method: "POST",
+              headers: { ...headers, "Content-Type": "application/json" },
+              body: JSON.stringify({
+                productId: String(item.productId || item.id),
+                quantity: Number(item.quantity || 1),
+              }),
+            });
+            result = await response.json();
+            if (!response.ok || !result.success) {
+              throw new Error(result.message || "Unable to sync guest cart.");
+            }
+          }
+
+          window.localStorage.removeItem(CART_STORAGE_KEY);
+          response = await fetch(`${API_URL}/cart`, { headers });
+          result = await response.json();
+          if (!response.ok || !result.success) {
+            throw new Error(result.message || "Unable to reload cart.");
+          }
+        }
+
+        setItems(mapApiCartToClientItems(result.cart || []));
       } catch (error) {
         console.error("Failed to sync cart from server", error);
       }
     };
 
-    fetchCart();
+    syncCart();
+    window.addEventListener("rewear-auth-changed", syncCart);
+    return () => window.removeEventListener("rewear-auth-changed", syncCart);
   }, []);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+      window.localStorage.setItem(getCartStorageKey(), JSON.stringify(items));
     }
   }, [items]);
 
@@ -94,11 +123,11 @@ export function CartProvider({ children }) {
           throw new Error(result.message || "Unable to add item to cart.");
         }
 
-        const cartItems = result.cart || [];
-        setItems(mapApiCartToClientItems(cartItems));
+        setItems(mapApiCartToClientItems(result.cart || []));
         return;
       } catch (error) {
         console.error("Cart sync failed", error);
+        return;
       }
     }
 
@@ -158,6 +187,7 @@ export function CartProvider({ children }) {
         return;
       } catch (error) {
         console.error("Cart update failed", error);
+        return;
       }
     }
 
@@ -193,6 +223,7 @@ export function CartProvider({ children }) {
         return;
       } catch (error) {
         console.error("Cart removal failed", error);
+        return;
       }
     }
 
@@ -209,15 +240,18 @@ export function CartProvider({ children }) {
           headers: { Authorization: `Bearer ${user.token}` },
         });
 
-        if (!response.ok) {
-          throw new Error("Unable to clear cart.");
+        const result = await response.json();
+        if (!response.ok || !result.success) {
+          throw new Error(result.message || "Unable to clear cart.");
         }
       } catch (error) {
         console.error("Clear cart failed", error);
+        return false;
       }
     }
 
     setItems([]);
+    return true;
   };
 
   const placeOrder = async (customerDetails) => {
@@ -227,63 +261,48 @@ export function CartProvider({ children }) {
       quantity: Number(item.quantity || 1),
     }));
 
-    if (user?.token) {
-      try {
-        const response = await fetch(`${API_URL}/orders`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${user.token}`,
-          },
-          body: JSON.stringify({
-            items: cartPayload,
-            shippingAddress: {
-              fullName: customerDetails.fullName,
-              phone: customerDetails.phone,
-              address: `${customerDetails.addressLine1 || ""} ${customerDetails.addressLine2 || ""}`.trim(),
-              city: customerDetails.city,
-              state: customerDetails.state,
-              zipCode: customerDetails.pinCode,
-              country: "India",
-            },
-            paymentMethod: customerDetails.paymentMethod || "UPI",
-          }),
-        });
-
-        const result = await response.json();
-        if (!response.ok || !result.success) {
-          throw new Error(result.message || "Unable to place order.");
-        }
-
-        await clearCart();
-        return {
-          id: result.order?._id || `RW-${Date.now()}`,
-          createdAt: result.order?.createdAt || new Date().toISOString(),
-          status: result.order?.status || "Pending",
-          items: result.order?.items || items,
-          subtotal,
-          shipping,
-          total,
-          customer: customerDetails,
-        };
-      } catch (error) {
-        console.error("Place order failed", error);
-      }
+    if (!user?.token) {
+      throw new Error("Please log in before placing an order.");
     }
 
-    const order = {
-      id: `RW-${Date.now()}`,
-      createdAt: new Date().toISOString(),
-      status: "Pending",
-      items,
-      subtotal,
-      shipping,
-      total,
-      customer: customerDetails,
-    };
+    const response = await fetch(`${API_URL}/orders`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${user.token}`,
+      },
+      body: JSON.stringify({
+        items: cartPayload,
+        shippingAddress: {
+          fullName: customerDetails.fullName,
+          phone: customerDetails.phone,
+          address: `${customerDetails.addressLine1 || ""} ${customerDetails.addressLine2 || ""}`.trim(),
+          city: customerDetails.city,
+          state: customerDetails.state,
+          zipCode: customerDetails.pinCode,
+          country: "India",
+        },
+        paymentMethod: customerDetails.paymentMethod || "UPI",
+      }),
+    });
 
+    const result = await response.json();
+    if (!response.ok || !result.success || !result.order?._id) {
+      throw new Error(result.message || "Unable to place order.");
+    }
+
+    await clearCart();
     setItems([]);
-    return order;
+    return {
+      id: result.order._id,
+      createdAt: result.order.createdAt,
+      status: result.order.status,
+      items: result.order.items,
+      subtotal: result.order.subtotal,
+      shipping: result.order.shipping,
+      total: result.order.total,
+      customer: result.order.customer,
+    };
   };
 
   const itemCount = useMemo(

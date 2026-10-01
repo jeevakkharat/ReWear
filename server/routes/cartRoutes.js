@@ -6,6 +6,7 @@ const validateMiddleware = require("../middleware/validateMiddleware");
 
 const router = express.Router();
 
+
 router.get("/", authMiddleware, getCart);
 router.post(
   "/add",
@@ -17,6 +18,8 @@ router.post(
   validateMiddleware,
   addToCart
 );
+
+
 router.put(
   "/update/:id",
   authMiddleware,
